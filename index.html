@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ballzs Studio — Générateur de Vidéos TikTok Satisfaisantes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <!-- PASSWORD ACCESS GATE (NAELA) -->
+  <div id="passwordGateOverlay" class="password-gate-overlay">
+    <div class="gate-card">
+      <div class="gate-logo">
+        <div class="logo-icon">
+          <span class="logo-orb"></span>
+          <span class="logo-ring"></span>
+        </div>
+        <h2>BALLZS <span>STUDIO</span></h2>
+      </div>
+      <div class="gate-badge">🔒 ACCÈS RESTREINT</div>
+      <p class="gate-desc">Veuillez entrer le mot de passe d'accès pour utiliser le studio de création vidéo.</p>
+      
+      <form id="gateForm" class="gate-form">
+        <div class="gate-input-wrapper">
+          <input 
+            type="password" 
+            id="gatePasswordInput" 
+            class="gate-input" 
+            placeholder="Entrez le mot de passe..." 
+            autocomplete="current-password"
+            required
+            autofocus
+          />
+          <button type="button" id="btnToggleGatePwd" class="gate-eye-btn" title="Afficher le mot de passe">👁️</button>
+        </div>
+        <p id="gateErrorMessage" class="gate-error hidden">Mot de passe incorrect. Réessayez.</p>
+        <button type="submit" id="btnSubmitGatePassword" class="btn btn-primary full-width btn-glow gate-submit-btn">
+          <span>Déverrouiller l'accès 🔓</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Studio Header -->
+    <header class="studio-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <span class="logo-orb"></span>
+          <span class="logo-ring"></span>
+        </div>
+        <div class="logo-text">
+          <h1>BALLZS <span>STUDIO</span></h1>
+          <p class="tagline">Générateur Automatique de Vidéos TikTok Monétisables (> 60s)</p>
+        </div>
+      </div>
+
+      <!-- Quick Game Mode Pill Selector -->
+      <div class="mode-pills-bar">
+        <button class="mode-pill" data-mode="solo" title="1 Bille — Quête 100% destruction">
+          <span class="pill-icon">🎯</span> Solo
+        </button>
+        <button class="mode-pill active" data-mode="duo" title="2 Billes — Duel Bleu vs Rouge">
+          <span class="pill-icon">⚔️</span> Duo (Duel)
+        </button>
+        <button class="mode-pill" data-mode="trio" title="3 Billes — Bataille Royale à 3">
+          <span class="pill-icon">🏆</span> Trio
+        </button>
+        <button class="mode-pill" data-mode="quad" title="4 Billes — Squad Clash">
+          <span class="pill-icon">👑</span> 4 Joueurs
+        </button>
+        <button class="mode-pill" data-mode="chaos" title="6 Billes — Chaos Total">
+          <span class="pill-icon">🌪️</span> Chaos
+        </button>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnRandomizeTop" class="btn btn-magic" title="Générer un concept complet aléatoire">
+          <span class="icon">🎲</span>
+          <span>Générer Aléatoirement</span>
+        </button>
+
+        <button id="btnAutoExport" class="btn btn-primary btn-glow" title="Enregistre la vidéo 65s et télécharge le fichier .mp4">
+          <span class="icon">🎬</span>
+          <span>Exporter Vidéo MP4</span>
+        </button>
+
+        <button id="btnMuteToggle" class="btn btn-icon" title="Activer / Couper le son">
+          <span id="soundIcon" class="icon">🔊</span>
+        </button>
+
+        <button id="btnSafeZoneToggle" class="btn btn-icon" title="Afficher la Safe Zone TikTok">
+          <span class="icon">📱</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <main class="studio-workspace">
+      <!-- Left: Smartphone Simulator & 9:16 Live Canvas -->
+      <section class="preview-column">
+        <div class="phone-wrapper">
+          <div class="phone-frame">
+            <div class="phone-notch">
+              <div class="camera-lens"></div>
+              <div class="speaker-grill"></div>
+            </div>
+
+            <div class="phone-screen">
+              <canvas id="simCanvas"></canvas>
+
+              <!-- Live Recording Overlay Banner -->
+              <div id="recordingBanner" class="recording-banner hidden">
+                <div class="rec-dot"></div>
+                <div class="rec-text">
+                  <span class="rec-label">ENREGISTREMENT MP4 HD 60 FPS</span>
+                  <span id="recProgressText" class="rec-timer">0.0s / 65.0s (0%)</span>
+                </div>
+                <div class="rec-bar-container">
+                  <div id="recProgressBar" class="rec-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="phone-chin">
+              <div class="home-indicator"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Player Controls Bar -->
+        <div class="player-controls-bar">
+          <button id="btnPlayPause" class="ctrl-btn" title="Lecture / Pause (Espace)">
+            <span id="playIcon">⏸️</span>
+          </button>
+          <button id="btnReset" class="ctrl-btn" title="Réinitialiser (R)">
+            <span>🔄</span>
+          </button>
+
+          <div class="stats-pill">
+            <span class="stat-item"><strong id="statFps">60</strong> FPS</span>
+            <span class="stat-sep">•</span>
+            <span class="stat-item"><strong id="statBricks">0</strong> Briques</span>
+            <span class="stat-sep">•</span>
+            <span class="stat-item"><strong id="statBalls">2</strong> Billes</span>
+            <span class="stat-sep">•</span>
+            <span class="stat-item">Format <strong class="badge-916">9:16 MP4</strong></span>
+          </div>
+
+          <button id="btnFullscreen" class="ctrl-btn" title="Plein écran">
+            <span>⛶</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right: Advanced Control Studio -->
+      <aside class="controls-column">
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+          <button class="tab-btn active" data-tab="tab-pattern">
+            <span class="tab-icon">🌀</span> Modèles (22)
+          </button>
+          <button class="tab-btn" data-tab="tab-physics">
+            <span class="tab-icon">⚽</span> Billes & Paris
+          </button>
+          <button class="tab-btn" data-tab="tab-audio">
+            <span class="tab-icon">🎵</span> Moteur Audio (10)
+          </button>
+          <button class="tab-btn" data-tab="tab-hook">
+            <span class="tab-icon">🎯</span> Règles & Enjeux
+          </button>
+          <button class="tab-btn" data-tab="tab-theme">
+            <span class="tab-icon">🎨</span> Thèmes (22)
+          </button>
+          <button class="tab-btn" data-tab="tab-export">
+            <span class="tab-icon">📹</span> Export MP4
+          </button>
+        </div>
+
+        <div class="tabs-content">
+          <!-- TAB 1: 22 PATTERNS & MINI-GAMES -->
+          <div class="tab-pane active" id="tab-pattern">
+            <div class="control-card">
+              <div class="card-header-row">
+                <h3 class="card-title">22 Mini-Jeux & Dispositions de Briques</h3>
+                <span class="badge-counter">22 Motifs</span>
+              </div>
+              <p class="card-desc">Choisissez parmi 22 géométries uniques avec physiques spatiales ou chutes gravitationnelles.</p>
+
+              <div class="pattern-selector-grid-scroll">
+                <!-- Group 1: Cercles & Rotations -->
+                <button class="pattern-card active" data-pattern="concentric_rings">
+                  <div class="pattern-icon">🪐</div>
+                  <div class="pattern-info">
+                    <h4>Anneaux d'Évasion</h4>
+                    <p>Cercles concentriques. Tente de percer vers l'extérieur.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="rotating_hexagon">
+                  <div class="pattern-icon">⬡</div>
+                  <div class="pattern-info">
+                    <h4>Hexagone Rotatif</h4>
+                    <p>Polygone tournant avec parois destructibles.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="cosmic_spiral">
+                  <div class="pattern-icon">🌀</div>
+                  <div class="pattern-info">
+                    <h4>Spirale Cosmique</h4>
+                    <p>Archimède infini de sphères néon destructibles.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="bullseye_target">
+                  <div class="pattern-icon">🎯</div>
+                  <div class="pattern-info">
+                    <h4>Cible Fléchette</h4>
+                    <p>Cibles concentriques segmentées en secteurs.</p>
+                  </div>
+                </button>
+
+                <!-- Group 2: Grilles & Puzzles -->
+                <button class="pattern-card" data-pattern="brick_matrix">
+                  <div class="pattern-icon">🧱</div>
+                  <div class="pattern-info">
+                    <h4>Matrice Casse-Briques</h4>
+                    <p>Grille dense de briques néon avec découpe.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="diamond_arena">
+                  <div class="pattern-icon">💎</div>
+                  <div class="pattern-info">
+                    <h4>Le Diamant / Losange</h4>
+                    <p>Prismes angulaires en diamant réfléchissant.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="heart_breaker">
+                  <div class="pattern-icon">💖</div>
+                  <div class="pattern-info">
+                    <h4>Le Cœur de Briques</h4>
+                    <p>Forteresse en forme de cœur à percer.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="castle_fortress">
+                  <div class="pattern-icon">🏰</div>
+                  <div class="pattern-info">
+                    <h4>La Forteresse Médiévale</h4>
+                    <p>Château avec créneaux et tours de garde.</p>
+                  </div>
+                </button>
+
+                <!-- Group 3: Chutes & Gravité -->
+                <button class="pattern-card" data-pattern="pachinko_drop">
+                  <div class="pattern-icon">🎰</div>
+                  <div class="pattern-info">
+                    <h4>Pachinko Cascade</h4>
+                    <p>Chute par le haut avec gravité à travers des chevilles.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="plinko_pyramid">
+                  <div class="pattern-icon">🔺</div>
+                  <div class="pattern-info">
+                    <h4>Plinko Pyramid</h4>
+                    <p>Cascade pyramidale avec rebonds multiples.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="hourglass">
+                  <div class="pattern-icon">⏳</div>
+                  <div class="pattern-info">
+                    <h4>Le Sablier du Destin</h4>
+                    <p>Goulet d'étranglement étroit entre deux chambres.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="gravity_well">
+                  <div class="pattern-icon">🪜</div>
+                  <div class="pattern-info">
+                    <h4>Chute Gravitationnelle</h4>
+                    <p>Plateformes en escalier avec descente continue.</p>
+                  </div>
+                </button>
+
+                <!-- Group 4: Formes Hybrides & Mondes -->
+                <button class="pattern-card" data-pattern="pyramid_chute">
+                  <div class="pattern-icon">🏛️</div>
+                  <div class="pattern-info">
+                    <h4>Pyramide Égyptienne</h4>
+                    <p>Gradins pyramidaux denses inversés.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="yin_yang">
+                  <div class="pattern-icon">☯️</div>
+                  <div class="pattern-info">
+                    <h4>L'Arène Yin-Yang</h4>
+                    <p>Double spirale harmonieuse en courbe S.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="cross_roads">
+                  <div class="pattern-icon">➕</div>
+                  <div class="pattern-info">
+                    <h4>La Croisée des 4 Piliers</h4>
+                    <p>Grande croix à 4 cadrans défensifs.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="double_vortex">
+                  <div class="pattern-icon">🌀</div>
+                  <div class="pattern-info">
+                    <h4>Le Double Vortex</h4>
+                    <p>Deux vortex circulaires jumeaux en orbite.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="star_galaxy">
+                  <div class="pattern-icon">⭐</div>
+                  <div class="pattern-info">
+                    <h4>L'Étoile Cosmique</h4>
+                    <p>Étoile géométrique à 8 branches lumineuses.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="ocean_waves">
+                  <div class="pattern-icon">🌊</div>
+                  <div class="pattern-info">
+                    <h4>Vagues Sinusoïdales</h4>
+                    <p>Stries ondulantes formant un paysage marin.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="donut_torus">
+                  <div class="pattern-icon">🍩</div>
+                  <div class="pattern-info">
+                    <h4>Le Circuit Donut</h4>
+                    <p>Double anneau toroïdal avec anneau intérieur.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="floating_islands">
+                  <div class="pattern-icon">🏝️</div>
+                  <div class="pattern-info">
+                    <h4>Les Îlots Flottants</h4>
+                    <p>5 grappes de briques isolées dans l'arène.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="pinball_bumper">
+                  <div class="pattern-icon">🕹️</div>
+                  <div class="pattern-info">
+                    <h4>Le Flipper Néon</h4>
+                    <p>Bumpers circulaires propulseurs.</p>
+                  </div>
+                </button>
+
+                <button class="pattern-card" data-pattern="octagon_cage">
+                  <div class="pattern-icon">🛑</div>
+                  <div class="pattern-info">
+                    <h4>L'Octogone Mortel</h4>
+                    <p>Cage de combat à 8 côtés rotatifs.</p>
+                  </div>
+                </button>
+              </div>
+
+              <button id="btnRegeneratePattern" class="btn btn-secondary full-width">
+                <span>⚡ Re-générer la disposition</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 2: BALLS & BETTING SYSTEM -->
+          <div class="tab-pane" id="tab-physics">
+            <div class="control-card">
+              <h3 class="card-title">Système de Paris & Compteur par Bille</h3>
+              <p class="card-desc">Chaque bille a sa couleur attitrée et son propre score en direct pour engager la communauté en commentaires.</p>
+
+              <!-- Live Betting Roster Preview -->
+              <div class="betting-roster-box">
+                <div class="roster-item">
+                  <span class="roster-dot" style="background:#00f0ff;"></span>
+                  <strong>P1 BLEUE</strong>
+                  <span class="roster-tag">Joueur 1</span>
+                </div>
+                <div class="roster-item">
+                  <span class="roster-dot" style="background:#ff0055;"></span>
+                  <strong>P2 ROUGE</strong>
+                  <span class="roster-tag">Joueur 2</span>
+                </div>
+                <div class="roster-item">
+                  <span class="roster-dot" style="background:#ffe600;"></span>
+                  <strong>P3 JAUNE</strong>
+                  <span class="roster-tag">Joueur 3</span>
+                </div>
+                <div class="roster-item">
+                  <span class="roster-dot" style="background:#00ff88;"></span>
+                  <strong>P4 VERTE</strong>
+                  <span class="roster-tag">Joueur 4</span>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <div class="label-row">
+                  <label for="inputBallCount">Nombre de billes dans l'arène</label>
+                  <span id="valBallCount" class="badge-value">2 Billes</span>
+                </div>
+                <input type="range" id="inputBallCount" min="1" max="6" step="1" value="2">
+              </div>
+
+              <div class="control-group">
+                <div class="label-row">
+                  <label for="inputBallSpeed">Vitesse initiale</label>
+                  <span id="valBallSpeed" class="badge-value">16</span>
+                </div>
+                <input type="range" id="inputBallSpeed" min="10" max="28" step="1" value="16">
+              </div>
+
+              <div class="control-group">
+                <div class="label-row">
+                  <label for="inputBallRadius">Taille des billes</label>
+                  <span id="valBallRadius" class="badge-value">18 px</span>
+                </div>
+                <input type="range" id="inputBallRadius" min="12" max="28" step="2" value="18">
+              </div>
+
+              <div class="control-group">
+                <div class="label-row">
+                  <label for="inputGravity">Gravité verticale</label>
+                  <span id="valGravity" class="badge-value">0.00 (Zéro-G)</span>
+                </div>
+                <input type="range" id="inputGravity" min="0" max="0.3" step="0.04" value="0">
+              </div>
+
+              <div class="control-group">
+                <div class="label-row">
+                  <label for="inputSpeedUp">Accélération par rebond (Suspense)</label>
+                  <span id="valSpeedUp" class="badge-value">+1.5%</span>
+                </div>
+                <input type="range" id="inputSpeedUp" min="0.005" max="0.04" step="0.005" value="0.015">
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: AUDIO ENGINE (10 INSTRUMENTS & 7 SCALES) -->
+          <div class="tab-pane" id="tab-audio">
+            <div class="control-card">
+              <h3 class="card-title">10 Instruments Synthétisés Polyphoniques</h3>
+
+              <div class="control-group">
+                <label for="selectInstrument">Choix de l'Instrument</label>
+                <select id="selectInstrument" class="custom-select">
+                  <option value="marimba" selected>🪵 1. Marimba Acoustique (Doux, rond et boisé — @ballzs7)</option>
+                  <option value="kalimba">✨ 2. Kalimba / Sanza (Lames métalliques résonnantes)</option>
+                  <option value="waterdrop">💧 3. Goutte d'Eau / Bubble Pop (Liquide ultra satisfaisant)</option>
+                  <option value="chime">🔔 4. Carillon de Cristal (Aigu, pur et lumineux)</option>
+                  <option value="synth">🌌 5. Synthé Rêveur 80s (Pluck atmosphérique avec filtre)</option>
+                  <option value="vibraphone">🎷 6. Vibraphone Jazz (Métallique chaleureux avec trémolo)</option>
+                  <option value="musicbox">🧚 7. Boîte à Musique Féerique (Mélodieux et cristallin)</option>
+                  <option value="pluck">🎻 8. Pluck Acoustique Harmonieuse (Cordes pincées)</option>
+                  <option value="arcade">👾 9. Rétro Arcade 8-bit (Blip chiptune dynamique)</option>
+                  <option value="basspluck">⚡ 10. Cyber Bass Pluck (Grave énergique et punchy)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label for="selectScale">Gamme Musicale (Sans fausse note)</label>
+                <select id="selectScale" class="custom-select">
+                  <option value="pentatonic_major" selected>🎵 Pentatonique Majeure (Harmonie universelle)</option>
+                  <option value="pentatonic_minor">🔮 Pentatonique Mineure (Mystérieux & Épique)</option>
+                  <option value="hirajoshi">🌸 Hirajoshi Japonaise (Zen et méditatif)</option>
+                  <option value="dreamy_lydian">🌌 Lydienne Cosmique (Positif et céleste)</option>
+                  <option value="cyber_bass">⚡ Cyber Bass (Grave et futuriste)</option>
+                  <option value="dorian_vibes">🕊️ Dorienne Mélodique (Harmonie médiévale douce)</option>
+                  <option value="blues_scale">🎸 Pentatonique Blues (Rythmique groovy)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label for="selectProgression">Progression Mélodique</label>
+                <select id="selectProgression" class="custom-select">
+                  <option value="ascending" selected>📈 Échelle Ascendante (Monte à chaque rebond pour le suspense)</option>
+                  <option value="bouncing_ladder">↕️ Va-et-Vient (Monte puis redescend)</option>
+                  <option value="harmonic">🎶 Cycle d'Arpèges Harmonieuses</option>
+                  <option value="random">🎲 Aléatoire dans la Gamme</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <div class="label-row">
+                  <label for="inputVolume">Volume Principal</label>
+                  <span id="valVolume" class="badge-value">70%</span>
+                </div>
+                <input type="range" id="inputVolume" min="0" max="1" step="0.05" value="0.7">
+              </div>
+
+              <button id="btnTestSound" class="btn btn-secondary full-width">
+                <span>🔊 Tester le son de l'instrument</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 4: ENJEUX & CONDITIONS DE VICTOIRE -->
+          <div class="tab-pane" id="tab-hook">
+            <div class="control-card">
+              <div class="card-header-row">
+                <h3 class="card-title">Enjeux & Règles de Fin de Partie</h3>
+                <span class="badge-monetization">Destruction 100%</span>
+              </div>
+              <p class="card-desc">
+                La vidéo et la partie se terminent uniquement lorsqu'<strong>il n'y a plus aucune brique à casser</strong>, suivies de 5 secondes de célébration finale.
+              </p>
+
+              <div class="control-group">
+                <label for="inputHookText">Titre d'Accroche / Enjeu</label>
+                <input type="text" id="inputHookText" class="custom-input" value="ROUGE vs BLEUE : QUELLE BILLE VA GAGNER ?">
+              </div>
+
+              <div class="control-group">
+                <label>Suggestions d'Enjeux Viraux (1-Clic)</label>
+                <div class="hook-chips">
+                  <button class="hook-chip">ROUGE vs BLEUE : QUELLE BILLE VA GAGNER ?</button>
+                  <button class="hook-chip">MISE SUR UNE COULEUR AVANT LA FIN !</button>
+                  <button class="hook-chip">QUI CASSERA LE PLUS DE BRIQUES ?</button>
+                  <button class="hook-chip">BATAILLE ROYALE : CHOISIS TON CHAMPION !</button>
+                  <button class="hook-chip">PEUT-ELLE CASSER 100% DES BRIQUES ?</button>
+                  <button class="hook-chip">QUI REMPORTERA LA PARTIE ?</button>
+                </div>
+              </div>
+
+              <div class="toggle-group">
+                <label class="toggle-label">
+                  <input type="checkbox" id="chkShowScoreboard" checked>
+                  <span class="toggle-custom"></span>
+                  <span>Afficher le Classement des Billes (Grand Score)</span>
+                </label>
+              </div>
+
+              <div class="toggle-group">
+                <label class="toggle-label">
+                  <input type="checkbox" id="chkSafeZone">
+                  <span class="toggle-custom"></span>
+                  <span>Guide Safe-Zone TikTok (Boutons Likes / Partage)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: 22 COLOR THEMES -->
+          <div class="tab-pane" id="tab-theme">
+            <div class="control-card">
+              <div class="card-header-row">
+                <h3 class="card-title">22 Palettes & Thèmes Visuels</h3>
+                <span class="badge-counter">22 Thèmes</span>
+              </div>
+              <div class="theme-grid-scroll">
+                <button class="theme-card active" data-theme="cyberpunk">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #0a0a14, #ff007f, #00f0ff);"></div>
+                  <div class="theme-name">1. Cyberpunk Néon</div>
+                </button>
+                <button class="theme-card" data-theme="sunset_vapor">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #120d24, #ff71ce, #01cdfe);"></div>
+                  <div class="theme-name">2. Sunset Synthwave</div>
+                </button>
+                <button class="theme-card" data-theme="neon_matrix">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #050f08, #00ff66, #76ff03);"></div>
+                  <div class="theme-name">3. Matrix Émeraude</div>
+                </button>
+                <button class="theme-card" data-theme="bubblegum">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #140c1b, #ff2a85, #fee440);"></div>
+                  <div class="theme-name">4. Bubblegum Pop</div>
+                </button>
+                <button class="theme-card" data-theme="deep_galaxy">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #070814, #f72585, #4cc9f0);"></div>
+                  <div class="theme-name">5. Galaxie Profonde</div>
+                </button>
+                <button class="theme-card" data-theme="lava_magma">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #160805, #ff1e00, #ffe600);"></div>
+                  <div class="theme-name">6. Lave & Magma</div>
+                </button>
+                <button class="theme-card" data-theme="ice_arctic">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #06101a, #00f0ff, #caf0f8);"></div>
+                  <div class="theme-name">7. Glace Arctique</div>
+                </button>
+                <button class="theme-card" data-theme="royal_amethyst">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #10081a, #7b2cbf, #ffe600);"></div>
+                  <div class="theme-name">8. Améthyste Royale</div>
+                </button>
+                <button class="theme-card" data-theme="tokyo_night">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #070a19, #ff007f, #00e5ff);"></div>
+                  <div class="theme-name">9. Tokyo Night</div>
+                </button>
+                <button class="theme-card" data-theme="enchanted_forest">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #05140d, #2ec4b6, #e76f51);"></div>
+                  <div class="theme-name">10. Forêt Enchantée</div>
+                </button>
+                <button class="theme-card" data-theme="pastel_dream">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #151320, #f72585, #4cc9f0);"></div>
+                  <div class="theme-name">11. Pêche & Pastel</div>
+                </button>
+                <button class="theme-card" data-theme="luxury_gold">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #0c0a06, #ffe600, #fb5607);"></div>
+                  <div class="theme-name">12. Or Noir Luxe</div>
+                </button>
+                <button class="theme-card" data-theme="acid_lime">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #090f05, #ccff00, #39ff14);"></div>
+                  <div class="theme-name">13. Acid Toxic</div>
+                </button>
+                <button class="theme-card" data-theme="miami_vice">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #140c1b, #f72585, #4cc9f0);"></div>
+                  <div class="theme-name">14. Miami Vice</div>
+                </button>
+                <button class="theme-card" data-theme="ruby_crimson">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #16050a, #e63946, #1d3557);"></div>
+                  <div class="theme-name">15. Rubis & Sangria</div>
+                </button>
+                <button class="theme-card" data-theme="retro_arcade">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #0d0d18, #ff0055, #ffe600);"></div>
+                  <div class="theme-name">16. Rétro 80s Arcade</div>
+                </button>
+                <button class="theme-card" data-theme="aurora_borealis">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #051016, #00f5d4, #7b2cbf);"></div>
+                  <div class="theme-name">17. Aurore Boréale</div>
+                </button>
+                <button class="theme-card" data-theme="minimal_mono">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #0a0a0f, #ffffff, #64748b);"></div>
+                  <div class="theme-name">18. Minimaliste Titanium</div>
+                </button>
+                <button class="theme-card" data-theme="cotton_candy">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #130d1d, #ffb7b2, #b5ead7);"></div>
+                  <div class="theme-name">19. Barbe à Papa</div>
+                </button>
+                <button class="theme-card" data-theme="hyper_drive">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #080812, #ff0055, #00f0ff);"></div>
+                  <div class="theme-name">20. Hyper Vitesse</div>
+                </button>
+                <button class="theme-card" data-theme="deep_abyss">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #040b14, #0077b6, #90e0ef);"></div>
+                  <div class="theme-name">21. Abysses Océaniques</div>
+                </button>
+                <button class="theme-card" data-theme="desert_dusk">
+                  <div class="theme-preview" style="background: linear-gradient(135deg, #160b08, #f39a59, #2a9d8f);"></div>
+                  <div class="theme-name">22. Crépuscule Désertique</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 6: VIDEO EXPORT MP4 -->
+          <div class="tab-pane" id="tab-export">
+            <div class="control-card export-highlight">
+              <div class="card-header-row">
+                <h3 class="card-title">🎬 Exportation Vidéo MP4 (60 FPS)</h3>
+                <span class="badge-monetization">Format .mp4 Garanti</span>
+              </div>
+              <p class="card-desc">
+                Enregistre la vidéo au format <strong>MP4 vertical 9:16 (1080x1920)</strong> avec la piste sonore synthétisée intégrée, prête pour TikTok et Instagram.
+              </p>
+
+              <div class="export-box">
+                <div class="export-field">
+                  <span>Format de Sortie</span>
+                  <strong id="exportFormatBadge">Vidéo .MP4</strong>
+                </div>
+                <div class="export-field">
+                  <span>Fin de Vidéo</span>
+                  <strong id="exportDurationBadge">Destruction 100%</strong>
+                </div>
+                <div class="export-field">
+                  <span>Résolution</span>
+                  <strong>1080 x 1920 (9:16 HD)</strong>
+                </div>
+                <div class="export-field">
+                  <span>Fluidité</span>
+                  <strong>60 FPS Ultra Fluide</strong>
+                </div>
+              </div>
+
+              <div class="export-actions">
+                <button id="btnStartAutoRecord" class="btn btn-primary full-width btn-glow">
+                  <span class="icon">🚀</span>
+                  <span>Enregistrer jusqu'à destruction complète (.MP4)</span>
+                </button>
+
+                <div class="manual-record-row">
+                  <button id="btnManualRecord" class="btn btn-danger">
+                    <span class="rec-icon">●</span>
+                    <span id="manualRecLabel">Enregistrement Manuel</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Export status card with video player & download button -->
+              <div id="exportStatusBox" class="export-status-box hidden">
+                <div class="status-header">
+                  <div class="status-icon">🎬</div>
+                  <div class="status-content">
+                    <h4 id="statusTitle">Vidéo enregistrée avec succès !</h4>
+                    <p id="statusDesc">Votre vidéo 60 FPS avec audio est prête.</p>
+                  </div>
+                </div>
+                <div class="recorded-preview-container">
+                  <video id="previewRecordedVideo" controls autoplay loop playsinline class="recorded-preview-player"></video>
+                </div>
+                <div class="status-actions">
+                  <a id="btnDownloadVideoDirect" class="btn btn-primary full-width btn-glow" download="ballzs_video.mp4">
+                    <span>📥 Télécharger la Vidéo</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
